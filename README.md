@@ -5,6 +5,15 @@ aggregates power the Telemetry Dashboard and Evolution Viewer.
 
 ## Quickstart
 
+Install the required dependencies.
+
+```bash
+# pg_dump is included in postgresql or postgresql-client
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
 ### Interacting with the database
 
 To start a psql instance with the read-only replica of the production Postgres
@@ -89,3 +98,17 @@ $ gzip -cd data/submission/20191201/474405.dat.gz | head -n3
 {"os": "Windows_NT", "child": "false", "label": "", "metric": "A11Y_CONSUMERS", "osVersion": "6.3", "application": "Firefox", "architecture": "x86"}    {0,0,0,0,0,0,0,0,0,0,2,0,20,2}
 {"os": "Windows_NT", "child": "false", "label": "", "metric": "A11Y_ISIMPLEDOM_USAGE_FLAG", "osVersion": "6.3", "application": "Firefox", "architecture": "x86"}        {2,0,0,0,2}
 ```
+
+### Running a notebook
+
+Ensure your data directory in the top-level directory matches the one in the
+notebook. Run the following script.
+
+```bash
+bin/start-jupyter
+```
+
+This script can be modified to include various configuration parameters for
+spark, including the default parallelism and the amount of executor memory. This
+project is designed to run in daily batches to run within a single executor, but
+it may be scaled to several days or weeks of data with some modification.
