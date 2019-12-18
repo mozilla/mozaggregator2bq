@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # DATA_DIR: The directory where the directory dumps will be written to
-# AGGREGATE_TYPE: One of "submission" or "build_id"
+# AGGREGATE_TYPE: One of "submission_date" or "build_id"
 # DS_NODASH: The datestring to process, without dashes e.g. 20191001
 
 data_dir=${DATA_DIR:-"data"}
-aggregate_type=${AGGREGATE_TYPE:-"submission"}
+aggregate_type=${AGGREGATE_TYPE:-"submission_date"}
 ds_nodash=${DS_NODASH?Provide a data in YYYYMMDD format}
 
 output=$data_dir/$aggregate_type/$ds_nodash

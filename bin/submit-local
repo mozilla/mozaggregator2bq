@@ -1,0 +1,10 @@
+#!/bin/bash
+
+set -x
+
+SPARK_HOME=$(python -c "import pyspark; print(pyspark.__path__[0])") \
+spark-submit \
+    --master 'local[*]' \
+    --conf spark.driver.memory=8g \
+    --conf spark.sql.shuffle.partitions=16 \
+    "$@"
