@@ -3,12 +3,13 @@
 A set of scripts for loading Firefox Telemetry aggregates into BigQuery. These
 aggregates power the Telemetry Dashboard and Evolution Viewer.
 
-## Quickstart
+## Overview
 
 Install the required dependencies.
 
 ```bash
 # pg_dump is included in postgresql or postgresql-client
+pg_dump --version
 python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
@@ -109,6 +110,15 @@ bin/start-jupyter
 ```
 
 This script can be modified to include various configuration parameters for
-spark, including the default parallelism and the amount of executor memory. This
-project is designed to run in daily batches to run within a single executor, but
-it may be scaled to several days or weeks of data with some modification.
+spark, including the default parallelism and the amount of executor memory.
+
+### Processing `pg_dump` into parquet
+
+Run the following scripts to transform the data dumps into parquet, where the
+json fields have been transformed into appropriate columns and arrays.
+
+```bash
+bin/submit-local scripts/pg_dump_to_parquet.py \
+    --input-dir data/submission_date/20191201 \
+    --output-dir data/parquet/submission_date/20191201
+```
