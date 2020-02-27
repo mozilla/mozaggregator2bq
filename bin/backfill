@@ -1,0 +1,67 @@
+#!/bin/bash
+export PROJECT="mozaggregator2bq"
+export DATASET="aggregates"
+export DATA_DIR="data"
+
+
+function run_day {
+    local aggregate_type=$1
+    local ds_nodash=$2
+    
+    local input="$DATA_DIR/$aggregate_type/$ds_nodash"
+    local intermediate="$DATA_DIR/parquet/$aggregate_type/$ds_nodash"
+    local output=gs://$PROJECT/$DATA_DIR/$aggregate_type/$ds_nodash
+    
+    # chexk if this has already been done
+    if ! gsutil stat "$output/$ds_nodash/_SUCCESS"; then
+        # dump the table
+        AGGREGATE_TYPE=$aggregate_type \
+        DS_NODASH=$ds_nodash \
+            script/pg_dump_by_day
+
+        # create parquet
+        echo "running for $intermediate"
+        bin/submit-local scripts/pg_dump_to_parquet.py \
+            --input-dir $input \
+            --output-dir "$intermediate"
+        
+        gsutil cp -r "$intermediate/" "$output/"
+    fi
+    bq load \
+        --source_format=PARQUET \
+        --autodetect \
+        --replace \
+        --time_partitioning_field="submission_date" \
+
+        "$PROJECT:$DATASET.${aggregate_type}_aggregates\$${ds_nodash}" \
+        "$output/*.parquet"
+}
+
+
+function ds_nodash_range {
+    DS_START=$1 DS_END=$2 python3 - <<EOD
+from datetime import date, timedelta, datetime
+from os import environ
+
+def parse(ds):
+    return datetime.strptime(ds, "%Y-%m-%d")
+
+start_date = parse(environ["DS_START"])
+end_date = parse(environ["DS_END"])
+
+dates = []
+for i in range((end_date - start_date).days):
+    dt = start_date + timedelta(i)
+    dates.append(dt.strftime("%Y-%m-%d"))
+print("\n".join(dates))
+EOD
+}
+
+mkdir -p "$DATA_DIR"
+start_ds="2020-01-01"
+end_ds="2020-02-01"
+for ds_nodash in $(ds_nodash_range "$start_ds" "$end_ds"); do
+    time echo run_day "submission_date" "$ds_nodash"
+    # TODO: format is broken
+    # time echo run_day "build_id" "$ds_nodash"
+done
