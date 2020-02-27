@@ -34,6 +34,7 @@ function run_day {
         --autodetect \
         --replace \
         --time_partitioning_type DAY \
+        --clustering_fields metric,version,channel,os \
         "$PROJECT:$DATASET.${aggregate_type}_aggregates\$${ds_nodash}" \
         "$output/*.parquet"
 }
@@ -84,6 +85,5 @@ start_ds="2020-01-01"
 end_ds="2020-01-02"
 for ds_nodash in $(ds_nodash_range "$start_ds" "$end_ds"); do
     time run_day "submission_date" "$ds_nodash"
-    # TODO: format is broken
-    # time echo run_day "build_id" "$ds_nodash"
+    time run_day "build_id" "$ds_nodash"
 done

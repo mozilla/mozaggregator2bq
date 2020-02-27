@@ -9,13 +9,14 @@ aggregate_type=${AGGREGATE_TYPE:-"submission_date"}
 ds_nodash=${DS_NODASH?Provide a data in YYYYMMDD format}
 
 output=$data_dir/$aggregate_type/$ds_nodash
-mkdir -p $output
+if [ -d "$output" ]; then rm -r "$output"; fi
+mkdir -p "$output"
 
 PGPASSWORD=$POSTGRES_PASS pg_dump \
-    --host $POSTGRES_HOST \
-    --username $POSTGRES_USER \
-    --dbname $POSTGRES_DB \
+    --host "$POSTGRES_HOST" \
+    --username "$POSTGRES_USER" \
+    --dbname "$POSTGRES_DB" \
     --table "${aggregate_type}_*_${ds_nodash}*" \
     --format directory \
     --verbose \
-    --file $output
+    --file "$output"
