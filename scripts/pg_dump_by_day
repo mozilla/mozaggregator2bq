@@ -9,7 +9,10 @@ aggregate_type=${AGGREGATE_TYPE:-"submission_date"}
 ds_nodash=${DS_NODASH?Provide a data in YYYYMMDD format}
 
 output=$data_dir/$aggregate_type/$ds_nodash
-if [ -d "$output" ]; then rm -r "$output"; fi
+if [ -d "$output" ]; then
+    echo "dump already exists for $output"
+    exit
+fi
 mkdir -p "$output"
 
 PGPASSWORD=$POSTGRES_PASS pg_dump \

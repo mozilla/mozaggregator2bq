@@ -47,6 +47,7 @@ AGGREGATE_SCHEMA = T.StringType()
 )
 def main(input_dir, output_dir):
     spark = SparkSession.builder.getOrCreate()
+    spark.conf.set("spark.sql.session.timeZone", "UTC")
 
     df = read_pg_dump(spark, input_dir)
 
@@ -55,6 +56,7 @@ def main(input_dir, output_dir):
         df.withColumn("parts", F.split("table_name", "_"))
         .withColumn("dimension", F.from_json("dimension", DIMENSION_SCHEMA))
         .select(
+            F.current_date().alias("ingest_date"),
             "aggregate_type",
             "ds_nodash",
             # parts[:2] form aggregate_type, this is parsed from the filename
