@@ -49,7 +49,6 @@ def main(input_dir, output_dir):
     spark = SparkSession.builder.getOrCreate()
 
     df = read_pg_dump(spark, input_dir)
-    df.show()
 
     # apply some other transformations to obtain the final table
     result = (
@@ -145,14 +144,27 @@ def extract_toc_mapping(line):
     # We rely on the padding in the binary file to extract the necessary information
     # b'\x00\x00\x00474424.dat\x00%=\x07\x00\x00\x01\x00\x00\x00\x00\x01\x00\x00\x000
     # \x00\x08\x00\x00\x0090014321\x00"\x00\x00\x00submission_date_aurora_42_20191201\x00'
+    #
+    # b'\x00\x00\x00496167.dat\x00\xb9\x91\x07\x00\x00\x00\x00\x00\x00\x00
+    # \x04\x00\x00\x001259\x00\x08\x00\x00\x0091420008\x00+\x00\x00\x00
+    # build_id_nightly_68_20191220_dimensions_idx
+    # \x00\x05\x00\x00\x00INDEX\x00\x04\x00\x00\x00\x00\x87\x00\x00\x00 CREATE
+    # INDEX build_id_nightly_68_20191220_dimensions_idx ON
+    # public.build_id_nightly_68_20191220 USING gin (dimensions
+    # jsonb_path_ops);'
     processed = line.replace(b"\x00", b" ").strip().split()
+
+    table_name = processed[-1].decode()
+    if b"CREATE INDEX" in line:
+        # this is an indexed table, get the actual name
+        for element in processed:
+            if b"public." not in element:
+                continue
+            table_name = element.split(b"public.")[-1].decode()
 
     # [b'474455.dat', b'(=\x07', b'\x01', b'\x01', b'0', b'\x08', b'90014330', b'"',
     # b'submission_date_aurora_40_20191201']
-    return {
-        "table_id": processed[0].split(b".")[0].decode(),
-        "table_name": processed[-1].decode(),
-    }
+    return {"table_id": processed[0].split(b".")[0].decode(), "table_name": table_name}
 
 
 def from_pg_array_udf(arr):
