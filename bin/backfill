@@ -27,7 +27,7 @@ function run_day {
             --input-dir "$input" \
             --output-dir "$intermediate"
         
-        gsutil rsync -r "$intermediate/" "$output/"
+        gsutil rsync -d -r "$intermediate/" "$output/"
     fi
     bq load \
         --source_format=PARQUET \

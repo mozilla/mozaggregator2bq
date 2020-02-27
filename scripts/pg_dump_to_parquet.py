@@ -8,7 +8,7 @@ from pyspark.sql import Row, SparkSession
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
 
-# This schema is an intermediate schema that is used prim
+# This schema is an intermediate schema that is used
 METADATA_SCHEMA = T.StructType(
     [
         T.StructField("aggregate_type", T.StringType(), False),
@@ -29,7 +29,7 @@ DIMENSION_SCHEMA = T.StructType(
     ]
 )
 
-AGGREGATE_SCHEMA = T.ArrayType(T.LongType())
+AGGREGATE_SCHEMA = T.StringType()
 
 
 @click.command("pg_dump_to_parquet")
@@ -49,6 +49,7 @@ def main(input_dir, output_dir):
     spark = SparkSession.builder.getOrCreate()
 
     df = read_pg_dump(spark, input_dir)
+    df.show()
 
     # apply some other transformations to obtain the final table
     result = (
@@ -56,11 +57,11 @@ def main(input_dir, output_dir):
         .withColumn("dimension", F.from_json("dimension", DIMENSION_SCHEMA))
         .select(
             "aggregate_type",
+            "ds_nodash",
             # parts[:2] form aggregate_type, this is parsed from the filename
             F.col("parts").getItem(2).alias("channel"),
             F.col("parts").getItem(3).alias("version"),
             # parts[-1] is ds_nodash, this is parsed from the filename
-            "ds_nodash",
             "dimension.*",
             from_pg_array_udf("aggregate"),
         )
@@ -77,7 +78,7 @@ def main(input_dir, output_dir):
     # osVersion      | 10.0
     # application    | Firefox
     # architecture   | x86
-    # aggregate      | [0, 2, 0, 2, 2]
+    # aggregate      | "[0, 2, 0, 2, 2]"
 
     result.repartition(1).write.parquet(output_dir, mode="overwrite")
 
@@ -155,9 +156,7 @@ def extract_toc_mapping(line):
 
 
 def from_pg_array_udf(arr):
-    return F.from_json(
-        F.translate(F.translate(arr, "{", "["), "}", "]"), AGGREGATE_SCHEMA
-    ).alias(arr)
+    return F.translate(F.translate(arr, "{", "["), "}", "]").alias(arr)
 
 
 if __name__ == "__main__":
