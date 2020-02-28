@@ -5,6 +5,36 @@ export PROJECT="mozaggregator2bq"
 export DATASET="aggregates"
 export DATA_DIR="data"
 
+function to_ds {
+    DS_NODASH=$1 python3 - <<EOD
+from datetime import datetime
+from os import environ
+ds = environ["DS_NODASH"]
+print(datetime.strptime(ds, "%Y%m%d").strftime("%Y-%m-%d"))
+EOD
+}
+
+function partition_exists {
+    local table=$1
+    local partition=$2
+    local result
+    result=$(bq query \
+        --nouse_legacy_sql \
+        --format json \
+        "SELECT
+            COUNT(1) as count
+        FROM
+            $table
+        WHERE
+            DATE(_PARTITIONTIME) = '$(to_ds "$partition")'" | \
+            jq -r ".[0].count"
+    )
+    ((result > 0))
+}
+
+table="aggregates.submission_date_aggregates"
+partition=20200101
+partition_exists $table $partition
 
 function run_day {
     local aggregate_type=$1
@@ -14,7 +44,7 @@ function run_day {
     local intermediate="$DATA_DIR/parquet/$aggregate_type/$ds_nodash"
     local output=gs://$PROJECT/$DATA_DIR/$aggregate_type/$ds_nodash
     
-    # chexk if this has already been done
+    # check if this has already been done
     if ! gsutil stat "$output/_SUCCESS"; then
         # dump the table
         AGGREGATE_TYPE=$aggregate_type \
@@ -29,14 +59,20 @@ function run_day {
         
         gsutil rsync -d -r "$intermediate/" "$output/"
     fi
-    bq load \
-        --source_format=PARQUET \
-        --autodetect \
-        --replace \
-        --time_partitioning_type DAY \
-        --clustering_fields metric,version,channel,os \
-        "$PROJECT:$DATASET.${aggregate_type}_aggregates\$${ds_nodash}" \
-        "$output/*.parquet"
+    local table="$DATASET.${aggregate_type}_aggregates"
+    if ! partition_exists "$table" "$ds_nodash"; then
+        echo "loading partition $ds_nodash into $table"
+        bq load \
+            --source_format=PARQUET \
+            --autodetect \
+            --replace \
+            --time_partitioning_type DAY \
+            --clustering_fields metric,version,channel,os \
+            "$PROJECT:${table}\$${ds_nodash}" \
+            "$output/*.parquet"
+    else
+        echo "partition $ds_nodash already exists in $table"
+    fi
 }
 
 
@@ -82,7 +118,7 @@ fi
 
 mkdir -p "$DATA_DIR"
 start_ds="2020-01-01"
-end_ds="2020-01-02"
+end_ds="2020-01-08"
 for ds_nodash in $(ds_nodash_range "$start_ds" "$end_ds"); do
     time run_day "submission_date" "$ds_nodash"
     time run_day "build_id" "$ds_nodash"

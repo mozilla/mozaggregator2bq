@@ -91,7 +91,7 @@ data
 4 directories, 103 files
 ```
 
-See the [`pg_dump` documentation](https://www.postgresql.org/docs/9.1/app-pgdump.html) for details on the file format. 
+See the [`pg_dump` documentation](https://www.postgresql.org/docs/9.1/app-pgdump.html) for details on the file format.
 
 ```bash
 $ gzip -cd data/submission/20191201/474405.dat.gz | head -n3
@@ -122,3 +122,28 @@ bin/submit-local scripts/pg_dump_to_parquet.py \
     --input-dir data/submission_date/20191201 \
     --output-dir data/parquet/submission_date/20191201
 ```
+
+### Running backfill
+
+The `bin/backfill` script will dump data from the Postgres database, transform
+the data into Parquet, and load the data into a BigQuery table. The current
+schema for the table is as follows:
+
+Field name | Type | Mode
+-|-|-
+ingest_date | DATE | REQUIRED
+aggregate_type | STRING | NULLABLE
+ds_nodash | STRING | NULLABLE
+channel | STRING | NULLABLE
+version | STRING | NULLABLE
+os | STRING | NULLABLE
+child | STRING | NULLABLE
+label | STRING | NULLABLE
+metric | STRING | NULLABLE
+osVersion | STRING | NULLABLE
+application | STRING | NULLABLE
+architecture | STRING | NULLABLE
+aggregate | STRING | NULLABLE
+
+There is a table for the build id aggregates and the submission date aggregates.
+The build ids are truncated to the nearest date.
