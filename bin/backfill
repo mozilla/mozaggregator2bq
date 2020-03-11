@@ -4,6 +4,7 @@ set -e
 export PROJECT="mozaggregator2bq"
 export DATASET="aggregates"
 export DATA_DIR="data"
+LOAD_BQ=${LOAD_BQ:-false}
 
 function to_ds {
     DS_NODASH=$1 python3 - <<EOD
@@ -60,6 +61,10 @@ function run_day {
         gsutil rsync -d -r "$intermediate/" "$output/"
     fi
     local table="$DATASET.${aggregate_type}_aggregates"
+    if ! $LOAD_BQ; then
+        echo "skipping bq load for $table"
+        return
+    fi
     if ! partition_exists "$PROJECT.$table" "$ds_nodash"; then
         echo "loading partition $ds_nodash into $table"
         bq load \
