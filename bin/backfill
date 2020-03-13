@@ -46,9 +46,10 @@ function run_day {
     # check if this has already been done
     if ! gsutil stat "$output/_SUCCESS"; then
         # dump the table
-        AGGREGATE_TYPE=$aggregate_type \
-        DS_NODASH=$ds_nodash \
-            scripts/pg_dump_by_day
+        if ! AGGREGATE_TYPE=$aggregate_type DS_NODASH=$ds_nodash scripts/pg_dump_by_day; then
+            echo "Missing pg_dump for $ds_nodash for $aggregate_type"
+            return
+        fi
 
         # create parquet
         echo "running for $intermediate"
