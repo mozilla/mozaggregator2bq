@@ -13,10 +13,8 @@ if [ -f "$output/toc.dat" ]; then
     echo "dump already exists for $output"
     exit
 fi
-if [ -d "$output" ]; then
-    rm -r "$output"
-    mkdir -p "$output"
-fi
+rm -rf "$output"
+mkdir -p "$output"
 
 PGPASSWORD=$POSTGRES_PASS pg_dump \
     --host "$POSTGRES_HOST" \
