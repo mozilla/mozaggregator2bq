@@ -5,6 +5,8 @@ export PROJECT="mozaggregator2bq"
 export DATASET="aggregates"
 export DATA_DIR="data"
 LOAD_BQ=${LOAD_BQ:-false}
+START_DS=${START_DS:-"2020-01-01"}
+END_DS=${END_DS:-"2020-01-08"}
 
 function to_ds {
     DS_NODASH=$1 python3 - <<EOD
@@ -122,9 +124,7 @@ fi
 
 
 mkdir -p "$DATA_DIR"
-start_ds="2020-01-01"
-end_ds="2020-01-08"
-for ds_nodash in $(ds_nodash_range "$start_ds" "$end_ds"); do
+for ds_nodash in $(ds_nodash_range "$START_DS" "$END_DS"); do
     time run_day "submission_date" "$ds_nodash"
     time run_day "build_id" "$ds_nodash"
 done
