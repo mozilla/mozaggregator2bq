@@ -35,10 +35,6 @@ function partition_exists {
     ((result > 0))
 }
 
-table="aggregates.submission_date_aggregates"
-partition=20200101
-partition_exists $table $partition
-
 function run_day {
     local aggregate_type=$1
     local ds_nodash=$2
