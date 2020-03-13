@@ -5,12 +5,25 @@ aggregates power the Telemetry Dashboard and Evolution Viewer.
 
 ## Overview
 
-Install the required dependencies.
+Install the required dependencies. Here, we will use a Google Cloud VM on an
+`n1-standard-4`, on a CentOS 8 image.
+
+```bash
+sudo dnf install \
+    git \
+    postgresql \
+    java-1.8.0-openjdk \
+    jq \
+    tmux
+```
+
+Start a new `tmux` session, which can be detached and reattached from a new ssh
+session.
 
 ```bash
 # pg_dump is included in postgresql or postgresql-client
 pg_dump --version
-python -m venv venv
+python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
@@ -147,3 +160,18 @@ aggregate | STRING | NULLABLE
 
 There is a table for the build id aggregates and the submission date aggregates.
 The build ids are truncated to the nearest date.
+
+It may be useful to use a small entry-point script.
+
+```bash
+#!/bin/bash
+set -x
+start=2015-06-01
+end=2020-04-01
+while ! [[ $start > $end ]]; do
+    rm -r data
+    up_to=$(date -d "$start + 1 month" +%F)
+    START_DS=$start END_DS=$up_to bash -x bin/backfill
+    start=$up_to
+done
+```
