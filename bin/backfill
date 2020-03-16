@@ -17,24 +17,6 @@ print(datetime.strptime(ds, "%Y%m%d").strftime("%Y-%m-%d"))
 EOD
 }
 
-function partition_exists {
-    local table=$1
-    local partition=$2
-    local result
-    result=$(bq query \
-        --nouse_legacy_sql \
-        --format json \
-        "SELECT
-            COUNT(1) as count
-        FROM
-            $table
-        WHERE
-            DATE(_PARTITIONTIME) = '$(to_ds "$partition")'" | \
-            jq -r ".[0].count"
-    )
-    ((result > 0))
-}
-
 function run_day {
     local aggregate_type=$1
     local ds_nodash=$2
@@ -58,24 +40,6 @@ function run_day {
             --output-dir "$intermediate"
         
         gsutil rsync -d -r "$intermediate/" "$output/"
-    fi
-    local table="$DATASET.${aggregate_type}_aggregates"
-    if ! $LOAD_BQ; then
-        echo "skipping bq load for $table"
-        return
-    fi
-    if ! partition_exists "$PROJECT.$table" "$ds_nodash"; then
-        echo "loading partition $ds_nodash into $table"
-        bq load \
-            --source_format=PARQUET \
-            --autodetect \
-            --replace \
-            --time_partitioning_type DAY \
-            --clustering_fields metric,version,channel,os \
-            "$PROJECT:${table}\$${ds_nodash}" \
-            "$output/*.parquet"
-    else
-        echo "partition $ds_nodash already exists in $table"
     fi
 }
 
