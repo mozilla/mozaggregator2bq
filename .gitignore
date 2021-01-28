@@ -4,3 +4,4 @@ venv/
 derby.log
 metastore_db/
 .vscode/
+.env
