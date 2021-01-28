@@ -26,6 +26,9 @@ pg_dump --version
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
+
+# if you are running jupyter notebooks
+pip install -r requirements-dev.txt
 ```
 
 ### Interacting with the database
