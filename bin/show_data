@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import click
 from pyspark.sql import SparkSession
 
