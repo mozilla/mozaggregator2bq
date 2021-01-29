@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
 # script that exports credentials from the local aws credential files into the
 # environmnet for use within docker-compose.
 # Usage: source bin/export_aws_config

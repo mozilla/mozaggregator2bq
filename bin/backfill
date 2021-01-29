@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
 set -e
 
 export PROJECT="mozaggregator2bq"
@@ -33,7 +34,7 @@ function run_day {
 
         # create parquet
         echo "running for $intermediate"
-        bin/submit-local bin/pg_dump_to_parquet \
+        bin/submit-local bin/pg_dump_to_parquet.py \
             --input-dir "$input" \
             --output-dir "$intermediate"
         
