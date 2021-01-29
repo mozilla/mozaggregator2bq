@@ -2,10 +2,9 @@
 set -e
 
 export PROJECT="mozaggregator2bq"
-export DATASET="aggregates"
 export DATA_DIR="data"
-START_DS=${START_DS?"START_DS must be set"}
-END_DS=${END_DS?"END_DS must be set"}
+START_DS=${START_DS?"must be set"}
+END_DS=${END_DS?"must be set"}
 
 function to_ds {
     DS_NODASH=$1 python3 - <<EOD
@@ -66,7 +65,7 @@ EOD
 cd "$(dirname "$0")/.."
 
 # checking if spark is enabled
-python -c "import pyspark; print(pyspark.__path__[0])"
+python3 -c "import pyspark; print(pyspark.__path__[0])"
 
 # checking if credentials are set, check export_credentials_s3 for full list
 : "${POSTGRES_USER?'POSTGRES_USER not set'}"
@@ -77,11 +76,6 @@ function cleanup {
 }
 trap cleanup EXIT
 gcloud config set project $PROJECT
-
-if ! bq ls $PROJECT:$DATASET; then
-    bq mk $PROJECT:$DATASET
-fi
-
 
 mkdir -p "$DATA_DIR"
 for ds_nodash in $(ds_nodash_range "$START_DS" "$END_DS"); do

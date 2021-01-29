@@ -12,6 +12,7 @@ services:
     environment:
       - CLOUDSDK_CONFIG=/tmp/.config/gcloud
       - CLOUDSDK_CORE_PROJECT
+      - POSTGRES_HOST
       # ensure that the project can access the credentials bucket
       - AWS_SECRET_ACCESS_KEY
       - AWS_ACCESS_KEY_ID
