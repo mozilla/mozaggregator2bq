@@ -4,9 +4,8 @@ set -e
 export PROJECT="mozaggregator2bq"
 export DATASET="aggregates"
 export DATA_DIR="data"
-LOAD_BQ=${LOAD_BQ:-false}
-START_DS=${START_DS:-"2020-01-01"}
-END_DS=${END_DS:-"2020-01-08"}
+START_DS=${START_DS?"START_DS must be set"}
+END_DS=${END_DS?"END_DS must be set"}
 
 function to_ds {
     DS_NODASH=$1 python3 - <<EOD
@@ -70,7 +69,7 @@ cd "$(dirname "$0")/.."
 python -c "import pyspark; print(pyspark.__path__[0])"
 
 # checking if credentials are set, check export_credentials_s3 for full list
-: "${POSTGRES_USER?}"
+: "${POSTGRES_USER?'POSTGRES_USER not set'}"
 
 original_project=$(gcloud config get-value project)
 function cleanup {
