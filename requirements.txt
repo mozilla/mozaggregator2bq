@@ -5,5 +5,5 @@
 #    pip-compile
 #
 click==7.0
-py4j==0.10.7              # via pyspark
-pyspark==2.4.4
+py4j==0.10.9              # via pyspark
+pyspark==3.0.1
