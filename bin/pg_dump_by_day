@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # DATA_DIR: The directory where the directory dumps will be written to
 # AGGREGATE_TYPE: One of "submission_date" or "build_id"

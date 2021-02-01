@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# Loads clustered data into the mozaggregator2bq table.
 
 set -x
 

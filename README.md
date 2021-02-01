@@ -5,27 +5,11 @@ aggregates power the Telemetry Dashboard and Evolution Viewer.
 
 ## Overview
 
-Install the required dependencies. Here, we will use a Google Cloud VM on an
-`n1-standard-4`, on a CentOS 8 image.
+Build the container and launch it:
 
 ```bash
-sudo dnf install \
-    git \
-    postgresql \
-    java-1.8.0-openjdk \
-    jq \
-    tmux
-```
-
-Start a new `tmux` session, which can be detached and reattached from a new ssh
-session.
-
-```bash
-# pg_dump is included in postgresql or postgresql-client
-pg_dump --version
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+docker-compose build
+docker-compose run --rm app bash
 ```
 
 ### Interacting with the database
@@ -35,7 +19,7 @@ instance, run the following commands. Ensure that you have the appropriate AWS
 credentials.
 
 ```bash
-source scripts/export_credentials_s3
+source bin/export_postgres_credentials_s3
 
 PGPASSWORD=$POSTGRES_PASS psql \
     --host="$POSTGRES_HOST" \
@@ -76,12 +60,12 @@ where schemaname='public' and tablename like 'submission_date%';
 To start dumping data, run the following commands.
 
 ```bash
-source scripts/export_credentials_s3
+source bin/export_postgres_credentials_s3
 
-time DATA_DIR=data AGGREGATE_TYPE=submission DS_NODASH=20191201 scripts/pg_dump_by_day
+time DATA_DIR=data AGGREGATE_TYPE=submission DS_NODASH=20191201 bin/pg_dump_by_day
 # 23.92s user 1.97s system 39% cpu 1:05.48 total
 
-time DATA_DIR=data AGGREGATE_TYPE=build_id DS_NODASH=20191201 scripts/pg_dump_by_day
+time DATA_DIR=data AGGREGATE_TYPE=build_id DS_NODASH=20191201 bin/pg_dump_by_day
 # 3.47s user 0.49s system 24% cpu 16.188 total
 ```
 
@@ -131,7 +115,7 @@ Run the following scripts to transform the data dumps into parquet, where the
 json fields have been transformed into appropriate columns and arrays.
 
 ```bash
-bin/submit-local scripts/pg_dump_to_parquet.py \
+bin/submit-local bin/pg_dump_to_parquet.py \
     --input-dir data/submission_date/20191201 \
     --output-dir data/parquet/submission_date/20191201
 ```

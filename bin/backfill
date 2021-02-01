@@ -1,12 +1,11 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
 set -e
 
 export PROJECT="mozaggregator2bq"
-export DATASET="aggregates"
 export DATA_DIR="data"
-LOAD_BQ=${LOAD_BQ:-false}
-START_DS=${START_DS:-"2020-01-01"}
-END_DS=${END_DS:-"2020-01-08"}
+START_DS=${START_DS?"must be set"}
+END_DS=${END_DS?"must be set"}
 
 function to_ds {
     DS_NODASH=$1 python3 - <<EOD
@@ -28,14 +27,14 @@ function run_day {
     # check if this has already been done
     if ! gsutil stat "$output/_SUCCESS"; then
         # dump the table
-        if ! AGGREGATE_TYPE=$aggregate_type DS_NODASH=$ds_nodash scripts/pg_dump_by_day; then
+        if ! AGGREGATE_TYPE=$aggregate_type DS_NODASH=$ds_nodash bin/pg_dump_by_day; then
             echo "Missing pg_dump for $ds_nodash for $aggregate_type"
             return
         fi
 
         # create parquet
         echo "running for $intermediate"
-        bin/submit-local scripts/pg_dump_to_parquet.py \
+        bin/submit-local bin/pg_dump_to_parquet.py \
             --input-dir "$input" \
             --output-dir "$intermediate"
         
@@ -67,22 +66,10 @@ EOD
 cd "$(dirname "$0")/.."
 
 # checking if spark is enabled
-python -c "import pyspark; print(pyspark.__path__[0])"
+python3 -c "import pyspark; print(pyspark.__path__[0])"
 
 # checking if credentials are set, check export_credentials_s3 for full list
-: "${POSTGRES_USER?}"
-
-original_project=$(gcloud config get-value project)
-function cleanup {
-    gcloud config set project "$original_project"
-}
-trap cleanup EXIT
-gcloud config set project $PROJECT
-
-if ! bq ls $PROJECT:$DATASET; then
-    bq mk $PROJECT:$DATASET
-fi
-
+: "${POSTGRES_USER?'POSTGRES_USER not set'}"
 
 mkdir -p "$DATA_DIR"
 for ds_nodash in $(ds_nodash_range "$START_DS" "$END_DS"); do
